@@ -1,7 +1,7 @@
 {
   "name": "@BuildHero/react-native-pdftron",
   "title": "React Native Pdftron",
-  "version": "3.0.4-19",
+  "version": "3.0.5",
   "description": "React Native Pdftron",
   "main": "./lib/index.js",
   "typings": "index.ts",
