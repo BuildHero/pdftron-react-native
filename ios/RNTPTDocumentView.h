@@ -719,6 +719,8 @@ static NSString * const PTSignaturesManager_signatureDirectory = @"PTSignaturesM
 
 - (void)openNavigationLists;
 
+- (void)setAnnotationDisplayAuthorMap:(NSDictionary *)authorMap completion:(void(^)(BOOL success, NSError * _Nullable error)) completion;
+
 - (void)openAnnotationList;
 
 - (BOOL)isReflowMode;

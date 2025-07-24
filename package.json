@@ -1,5 +1,5 @@
 {
-  "name": "react-native-pdftron",
+  "name": "@BuildHero/react-native-pdftron",
   "title": "React Native Pdftron",
   "version": "3.0.4-19",
   "description": "React Native Pdftron",
@@ -16,8 +16,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ApryseSDK/pdftron-react-native.git",
-    "baseUrl": "https://github.com/ApryseSDK/pdftron-react-native"
+    "url": "git+https://github.com/BuildHero/pdftron-react-native.git",
+    "baseUrl": "https://github.com/BuildHero/pdftron-react-native"
   },
   "license": "SEE LICENSE IN LICENSE",
   "homepage": "https://docs.apryse.com/",

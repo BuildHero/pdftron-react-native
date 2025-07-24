@@ -1758,6 +1758,11 @@ NS_ASSUME_NONNULL_END
                 typeString = PTFieldTypeUnknownKey;
             }
             
+            bool isRequired = [field GetFlag:e_ptrequired];
+            if (isRequired) {
+                [fieldMap setValue:@"Required" forKey:@"Required"];
+            }
+            
             [fieldMap setValue:typeString forKey:PTFormFieldTypeKey];
             [fieldMap setValue:fieldName forKey:PTFormFieldNameKey];
         }
@@ -3555,6 +3560,7 @@ NS_ASSUME_NONNULL_END
         
         if ([self.delegate respondsToSelector:@selector(behaviorActivated:action:data:)]) {
             [self.delegate behaviorActivated:self action:PTLinkPressLinkAnnotationKey data:@{
+                @"annotationId": annotation.GetUniqueIDAsString,
                 PTURLLinkAnnotationKey: url,
             }];
         }
@@ -6325,36 +6331,16 @@ NS_ASSUME_NONNULL_END
 
 - (void)setCustomImage:(PTImage*)image OnAnnotation:(PTAnnot*)annot onDoc:(PTPDFDoc*)doc
 {
-    // Save the original bounding box
-    PTPDFRect* original_bbox = [annot GetRect];
-    double orig_x1 = [original_bbox GetX1];
-    double orig_y1 = [original_bbox GetY1];
-    double orig_x2 = [original_bbox GetX2];
-    double orig_y2 = [original_bbox GetY2];
-    
-    double original_width = orig_x2 - orig_x1;
-    double original_height = orig_y2 - orig_y1;
-
-    // Get image dimensions
-    double image_width = [image GetImageWidth];
-    double image_height = [image GetImageHeight];
-
-    // Calculate aspect-fit scaling ratio to retain size
-    double aspectFitRatio = fmin(original_width / image_width, original_height / image_height);
-
-    // Compute new image dimensions
-    double new_width = image_width * aspectFitRatio;
-    double new_height = image_height * aspectFitRatio;
-    
-    // Initialize a new PTElementWriter, PTElementBuilder and new markup object
+    // Initialize a new PTElementWriter and PTElementBuilder
     PTElementWriter* writer = [[PTElementWriter alloc] init];
     PTElementBuilder* builder = [[PTElementBuilder alloc] init];
-    PTMarkup *markupAnnot = [[PTMarkup alloc] initWithAnn:annot];
 
     [writer WriterBeginWithSDFDoc:[doc GetSDFDoc] compress:YES];
     
+    int w = [image GetImageWidth], h = [image GetImageHeight];
+
     // Initialize a new image element
-    PTElement* img_element = [builder CreateImageWithCornerAndScale:image x:0 y:0 hscale:image_width vscale:image_height];
+    PTElement* img_element = [builder CreateImageWithCornerAndScale:image x:0 y:0 hscale:w vscale:h];
 
     // Write the element
     [writer WritePlacedElement:img_element];
@@ -6370,22 +6356,6 @@ NS_ASSUME_NONNULL_END
         
     // Overwrite the annotation's appearance with the new appearance stream
     [annot SetAppearance:appearance_stream annot_state:e_ptnormal app_state:0];
-
-    // Compute the final annotation rect from the appearance bounding box
-    PTPDFRect* new_annot_rect = [[PTPDFRect alloc] initWithX1:orig_x1
-                                                          y1:orig_y1
-                                                          x2:(orig_x1 + new_width)
-                                                          y2:(orig_y1 + new_height)];
-
-    // Apply the computed annotation rect
-    [annot SetRect:new_annot_rect];
-    
-    // Rotate the new appearance
-    [markupAnnot RotateAppearance:[[[annot GetSDFObj] FindObj:@"Rotate"] GetNumber]];
-    
-    // Apply original bbox to maintain size
-    [annot SetRect:original_bbox];
-
 }
 
 - (void)setForceAppTheme:(NSString *)forcedAppTheme
@@ -6410,6 +6380,36 @@ NS_ASSUME_NONNULL_END
         UIColor *combinedColor = [self convertRGBAToUIColor:fieldHighlightColor];
         [pdfViewCtrl SetFieldHighlightColor:combinedColor];
         [pdfViewCtrl Update:YES];
+    }
+}
+
+- (void)setAnnotationDisplayAuthorMap:(NSDictionary *)authorMap completion:(void(^)(BOOL success, NSError * _Nullable error))completion
+{
+    __block BOOL allSuccess = YES;
+    __block NSError *finalError = nil;
+    __block NSUInteger remainingUpdates = authorMap.count;
+
+    for (NSString *authorId in authorMap) {
+        NSString *authorName = authorMap[authorId];
+
+        [self.documentViewController.toolManager.annotationManager setAuthorName:authorName forIdentifier:authorId completion:^(BOOL success, NSError * _Nullable error) {
+            if (!success) {
+                allSuccess = NO;
+                
+                if (finalError == nil) {
+                    finalError = error;  // Capture the first error
+                }
+            }
+
+            remainingUpdates--;
+
+            // Once all updates are completed, call the completion handler
+            if (remainingUpdates == 0) {
+                if (completion) {
+                    completion(allSuccess, finalError);
+                }
+            }
+        }];
     }
 }
 

@@ -1,1 +1,1 @@
-json -I -f package.json -e "this.name=\"@pdftron/react-native-pdf\""
+json -I -f package.json -e "this.name=\"@BuildHero/react-native-pdf\""

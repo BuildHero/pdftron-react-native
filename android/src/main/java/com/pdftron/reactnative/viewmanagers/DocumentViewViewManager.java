@@ -1456,6 +1456,15 @@ public class DocumentViewViewManager extends ViewGroupManager<DocumentView> {
         }
     }
 
+    public void setAnnotationDisplayAuthorMap(int tag, ReadableMap map) throws PDFNetException {
+        DocumentView documentView = mDocumentViews.get(tag);
+
+        if (documentView != null) {
+            documentView.setAnnotationDisplayAuthorMap(map);
+        } else {
+            throw new PDFNetException("", 0L, getName(), "setAnnotationDisplayAuthorMap", "Unable to set annotation display author map");
+        }
+    }
 
     @Override
     public boolean needsCustomLayoutForChildren() {

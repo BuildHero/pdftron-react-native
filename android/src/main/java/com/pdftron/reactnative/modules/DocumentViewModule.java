@@ -341,6 +341,7 @@ public class DocumentViewModule extends ReactContextBaseJavaModule implements Ac
             public void run() {
                 try {
                     mDocumentViewInstance.openAnnotationList(tag);
+                    promise.resolve(null);
                 } catch (Exception ex) {
                     promise.reject(ex);
                 }
@@ -1479,6 +1480,21 @@ public class DocumentViewModule extends ReactContextBaseJavaModule implements Ac
             public void run() {
                 try {
                     mDocumentViewInstance.setFormFieldHighlightColor(tag, fieldHighlightColor);
+                    promise.resolve(null);
+                } catch (Exception ex) {
+                    promise.reject(ex);
+                }
+            }
+        });
+    }
+
+    @ReactMethod
+    public void setAnnotationDisplayAuthorMap(final int tag, final ReadableMap map, final Promise promise) {
+        getReactApplicationContext().runOnUiQueueThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    mDocumentViewInstance.setAnnotationDisplayAuthorMap(tag, map);
                     promise.resolve(null);
                 } catch (Exception ex) {
                     promise.reject(ex);

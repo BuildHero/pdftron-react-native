@@ -30,6 +30,10 @@ android {
     compileSdkVersion 35
     buildToolsVersion rootProject.hasProperty('buildToolsVersion') ? rootProject.buildToolsVersion : "30.0.2"
 
+    buildFeatures {
+        viewBinding true
+    }    
+
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 35
@@ -67,7 +71,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.1'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
     
-    implementation "com.pdftron:pdftron:11.6.0"
-    implementation "com.pdftron:tools:11.6.0"
-    implementation "com.pdftron:collab:11.6.0"
+    implementation "com.pdftron:pdftron:11.1.0"
+    implementation "com.pdftron:tools:11.1.0"
+    implementation "com.pdftron:collab:11.1.0"
 }

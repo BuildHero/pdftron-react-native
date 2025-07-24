@@ -131,7 +131,7 @@ public class DocumentView extends com.pdftron.pdf.controls.DocumentView2 {
     private String mBase64Extension = ".pdf";
     private String mDocumentExtension;
 
-    private final ArrayList<File> mTempFiles = new ArrayList<>();
+    private ArrayList<File> mTempFiles = new ArrayList<>();
 
     private FragmentManager mFragmentManagerSave; // used to deal with lifecycle issue
 
@@ -139,8 +139,8 @@ public class DocumentView extends com.pdftron.pdf.controls.DocumentView2 {
     private ToolManagerBuilder mToolManagerBuilder;
     private ViewerConfig.Builder mBuilder;
 
-    private final ArrayList<ToolManager.ToolMode> mDisabledTools = new ArrayList<>();
-    private final ArrayList<ToolbarButtonType> mDisabledButtonTypes = new ArrayList<>(); // used to disabled button types that are with specific a with explicit tool type (e.g. checkmark, dot, cross stamps)
+    private ArrayList<ToolManager.ToolMode> mDisabledTools = new ArrayList<>();
+    private ArrayList<ToolbarButtonType> mDisabledButtonTypes = new ArrayList<>(); // used to disabled button types that are with specific a with explicit tool type (e.g. checkmark, dot, cross stamps)
 
     private String mExportPath;
     private String mOpenUrlPath;
@@ -2347,12 +2347,14 @@ public class DocumentView extends com.pdftron.pdf.controls.DocumentView2 {
 
         getViewTreeObserver().removeOnGlobalLayoutListener(mOnGlobalLayoutListener);
 
-        for (File file : mTempFiles) {
-            if (file != null && file.exists()) {
-                file.delete();
+        if (mTempFiles != null) {
+            for (File file : mTempFiles) {
+                if (file != null && file.exists()) {
+                    file.delete();
+                }
             }
+            mTempFiles = null;
         }
-        mTempFiles.clear();
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -2441,6 +2443,7 @@ public class DocumentView extends com.pdftron.pdf.controls.DocumentView2 {
                     if (overrideAction && isOverrideAction(KEY_CONFIG_STICKY_NOTE_SHOW_POP_UP)) {
                         WritableMap annotationDataCopy = Arguments.createMap();
                         annotationDataCopy.merge(annotationData);
+                        annotationDataCopy.putString("annotationId", entry.getKey().getUniqueID().toString());
                         try {
                             if (entry.getKey().getType() == Annot.e_Text) {
                                 WritableMap params = Arguments.createMap();
@@ -3931,6 +3934,12 @@ public class DocumentView extends com.pdftron.pdf.controls.DocumentView2 {
 
                 fieldMap.putString(KEY_FIELD_NAME, field.getName());
                 fieldMap.putString(KEY_FIELD_TYPE, typeString);
+
+                // ptrequired
+                if (field.getFlag(1)) {
+                    fieldMap.putString("Required", "Required");
+                }
+                
                 return fieldMap;
             }
         } finally {
@@ -5157,5 +5166,16 @@ public class DocumentView extends com.pdftron.pdf.controls.DocumentView2 {
                 getId(),
                 "topChange",
                 event);
+    }
+
+    public void setAnnotationDisplayAuthorMap(final ReadableMap authorMap) {
+        final ReadableMapKeySetIterator iterator = authorMap.keySetIterator();
+
+        while (iterator.hasNextKey()) {
+            final String userId = iterator.nextKey();
+            final String userName = authorMap.getString(userId);
+
+            mCollabManager.addUser(userId, userName);
+        }
     }
 }

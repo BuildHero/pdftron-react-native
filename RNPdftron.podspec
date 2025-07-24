@@ -25,6 +25,8 @@ Pod::Spec.new do |s|
   s.pod_target_xcconfig = {
     'FRAMEWORK_SEARCH_PATHS' => '"$(PODS_ROOT)/PDFNet"'
   }
+
+  install_modules_dependencies(s)
 end
 
   

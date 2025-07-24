@@ -9,10 +9,39 @@
 
 @synthesize bridge = _bridge;
 
+#if RCT_NEW_ARCH_ENABLED
+@synthesize viewRegistry_DEPRECATED = _viewRegistry_DEPRECATED;
+#endif
+
+#if RCT_NEW_ARCH_ENABLED
+- (RNTPTDocumentView *)getDocumentView:(nonnull NSNumber *)tag viewRegistry:(nonnull RCTViewRegistry *)viewRegistry
+{
+    UIView *view = [viewRegistry viewForReactTag:tag];
+    
+    RNTPTDocumentView *documentView;
+    
+    if ([view isKindOfClass:[RNTPTDocumentView class]]) {
+        documentView = (RNTPTDocumentView *)view;
+    } else {
+        // // This component is used in Fabric through LegacyInteropLayer.
+        UIView *subview = view.subviews.firstObject;
+        
+        if ([subview isKindOfClass:[RNTPTDocumentView class]]) {
+            documentView = (RNTPTDocumentView *)subview;
+        } else {
+            throw [NSException exceptionWithName:@"InvalidView" reason:@"View is not a RNTPTDocumentView" userInfo:nil];
+        }
+    }
+    
+    return documentView;
+}
+#endif
+
 - (dispatch_queue_t)methodQueue
 {
     return dispatch_get_main_queue();
 }
+
 RCT_EXPORT_MODULE(DocumentViewManager) // JS-name
 
 - (RNTPTDocumentViewManager *)documentViewManager
@@ -24,9 +53,9 @@ RCT_EXPORT_MODULE(DocumentViewManager) // JS-name
 {
     return [NSError errorWithDomain:@"com.pdftron.react-native" code:0 userInfo:
             @{
-              NSLocalizedDescriptionKey: exception.name,
-              NSLocalizedFailureReasonErrorKey: exception.reason ?: @"",
-              }];
+        NSLocalizedDescriptionKey: exception.name,
+        NSLocalizedFailureReasonErrorKey: exception.reason ?: @"",
+    }];
 }
 
 #pragma mark - Methods
@@ -38,7 +67,14 @@ RCT_REMAP_METHOD(setToolMode,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [self.documentViewManager setToolModeForDocumentView:documentView toolMode:toolMode];
+        }];
+#else
         [[self documentViewManager] setToolModeForDocumentViewTag:tag toolMode:toolMode];
+#endif
         resolve(nil);
     }
     @catch (NSException *exception) {
@@ -52,8 +88,16 @@ RCT_REMAP_METHOD(commitTool,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            BOOL committed = [[self documentViewManager] commitToolForDocumentView:documentView];
+            resolve(@(committed));
+        }];
+#else
         BOOL committed = [[self documentViewManager] commitToolForDocumentViewTag:tag];
         resolve(@(committed));
+#endif
     }
     @catch (NSException *exception) {
         reject(@"commit_tool", @"Failed to commit tool", [self errorFromException:exception]);
@@ -68,8 +112,16 @@ RCT_REMAP_METHOD(getDocumentPath,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSString *path = [[self documentViewManager] getDocumentPathForDocumentView:documentView];
+            resolve(path);
+        }];
+#else
         NSString *path = [[self documentViewManager] getDocumentPathForDocumentViewTag:tag];
         resolve(path);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"export_failed", @"Failed to get document path", [self errorFromException:exception]);
@@ -83,8 +135,16 @@ RCT_REMAP_METHOD(getAllFields,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSMutableArray<NSDictionary *> *fields = [[self documentViewManager] getAllFieldsForDocumentView:documentView pageNumber:pageNumber];
+            resolve(fields);
+        }];
+#else
         NSMutableArray<NSDictionary *> *fields= [[self documentViewManager] getAllFieldsForDocumentViewTag:tag pageNumber:pageNumber];
         resolve(fields);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"export_failed", @"Failed to get all fields for the page", [self errorFromException:exception]);
@@ -101,8 +161,16 @@ RCT_REMAP_METHOD(exportAsImage,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSString *path = [[self documentViewManager] exportAsImageForDocumentView:documentView pageNumber:pageNumber dpi:dpi exportFormat:exportFormat transparent:transparent];
+            resolve(path);
+        }];
+#else
         NSString *path = [[self documentViewManager] exportAsImageForDocumentViewTag:tag pageNumber:pageNumber dpi:dpi exportFormat:exportFormat transparent:transparent];
         resolve(path);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"export_failed", @"Failed to get document path", [self errorFromException:exception]);
@@ -116,8 +184,16 @@ RCT_REMAP_METHOD(setCurrentToolbar,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setCurrentToolbarForDocumentView:documentView toolbarTitle:toolbarTitle];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setCurrentToolbarForDocumentViewTag:tag toolbarTitle:toolbarTitle];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_current_toolbar_failed", @"Failed to set current toolbar", [self errorFromException:exception]);
@@ -130,8 +206,16 @@ RCT_REMAP_METHOD(getPageCount,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            int pageCount = [[self documentViewManager] getPageCountForDocumentView:documentView];
+            resolve(@(pageCount));
+        }];
+#else
         int pageCount = [[self documentViewManager] getPageCountForDocumentViewTag:tag];
         resolve(@(pageCount));
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_failed", @"Failed to get page count", [self errorFromException:exception]);
@@ -145,8 +229,16 @@ RCT_REMAP_METHOD(importBookmarkJson,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] importBookmarkJsonForDocumentView:documentView bookmarkJson:bookmarkJson];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] importBookmarkJsonForDocumentViewTag:tag bookmarkJson:bookmarkJson];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"import_failed", @"Failed to import bookmark json", [self errorFromException:exception]);
@@ -159,8 +251,16 @@ RCT_REMAP_METHOD(openBookmarkList,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] openBookmarkListForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] openBookmarkListForDocumentViewTag:tag];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"open_bookmark_list_failed", @"Failed to open bookmark list", [self errorFromException:exception]);
@@ -174,9 +274,18 @@ RCT_REMAP_METHOD(exportAnnotations,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSString *xfdf = [[self documentViewManager] exportAnnotationsForDocumentView:documentView
+                                                                                  options:options];
+            resolve(xfdf);
+        }];
+#else
         NSString *xfdf = [[self documentViewManager] exportAnnotationsForDocumentViewTag:tag
                                                                                  options:options];
         resolve(xfdf);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"export_failed", @"Failed to export annotations", [self errorFromException:exception]);
@@ -191,8 +300,16 @@ RCT_REMAP_METHOD(importAnnotations,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSArray<NSDictionary *>* importedAnnotations = [[self documentViewManager] importAnnotationsForDocumentView:documentView xfdf:xfdf replace:replace];
+            resolve(importedAnnotations);
+        }];
+#else
         NSArray<NSDictionary *>* importedAnnotations = [[self documentViewManager] importAnnotationsForDocumentViewTag:tag xfdf:xfdf replace:replace];
         resolve(importedAnnotations);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"import_failed", @"Failed to import annotations", [self errorFromException:exception]);
@@ -206,8 +323,16 @@ RCT_REMAP_METHOD(flattenAnnotations,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] flattenAnnotationsForDocumentView:documentView formsOnly:formsOnly];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] flattenAnnotationsForDocumentViewTag:tag formsOnly:formsOnly];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"flatten_failed", @"Failed to flatten annotations", [self errorFromException:exception]);
@@ -221,8 +346,16 @@ RCT_REMAP_METHOD(deleteAnnotations,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] deleteAnnotationsForDocumentView:documentView annotations:annotations];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] deleteAnnotationsForDocumentViewTag:tag annotations:annotations];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"delete_failed", @"Failed to delete annotations", [self errorFromException:exception]);
@@ -235,6 +368,18 @@ RCT_REMAP_METHOD(saveDocument,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] saveDocumentForDocumentView:documentView completionHandler:^(NSString * _Nullable filePath) {
+                if (filePath) {
+                    resolve(filePath);
+                } else {
+                    reject(@"save_failed", @"Failed to save document", nil);
+                }
+            }];
+        }];
+#else
         [[self documentViewManager] saveDocumentForDocumentViewTag:tag completionHandler:^(NSString * _Nullable filePath) {
             if (filePath) {
                 resolve(filePath);
@@ -242,6 +387,7 @@ RCT_REMAP_METHOD(saveDocument,
                 reject(@"save_failed", @"Failed to save document", nil);
             }
         }];
+#endif
     }
     @catch (NSException *exception) {
         reject(@"save_failed", @"Failed to save document", [self errorFromException:exception]);
@@ -257,8 +403,16 @@ RCT_REMAP_METHOD(setFlagForFields,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setFlagForFieldsForDocumentView:documentView forFields:fields setFlag:(PTFieldFlag)flag toValue:value];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setFlagForFieldsForDocumentViewTag:tag forFields:fields setFlag:(PTFieldFlag)flag toValue:value];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_flag_for_fields", @"Failed to set flag on fields", [self errorFromException:exception]);
@@ -272,8 +426,16 @@ RCT_REMAP_METHOD(setValuesForFields,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setValuesForFieldsForDocumentView:documentView map:map];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setValuesForFieldsForDocumentViewTag:tag map:map];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_value_for_fields", @"Failed to set value on fields", [self errorFromException:exception]);
@@ -287,8 +449,16 @@ RCT_REMAP_METHOD(getField,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSDictionary *field = [[self documentViewManager] getFieldForDocumentView:documentView fieldName:fieldName];
+            resolve(field);
+        }];
+#else
         NSDictionary *field = [[self documentViewManager] getFieldForDocumentViewTag:tag fieldName:fieldName];
         resolve(field);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_field", @"Failed to get field", [self errorFromException:exception]);
@@ -301,8 +471,16 @@ RCT_REMAP_METHOD(openAnnotationList,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] openAnnotationListForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] openAnnotationListForDocumentViewTag:tag];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"open_annotation_list", @"Failed to open annotation list", [self errorFromException:exception]);
@@ -316,8 +494,16 @@ RCT_REMAP_METHOD(setFlagsForAnnotations,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setFlagsForAnnotationsForDocumentView:documentView annotationFlagList:annotationFlagList];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setFlagsForAnnotationsForDocumentViewTag:tag annotationFlagList:annotationFlagList];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_flag_for_annotations", @"Failed to set flag on annotations", [self errorFromException:exception]);
@@ -332,8 +518,16 @@ RCT_REMAP_METHOD(selectAnnotation,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] selectAnnotationForDocumentView:documentView annotationId:annotationId pageNumber:pageNumber];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] selectAnnotationForDocumentViewTag:tag annotationId:annotationId pageNumber:pageNumber];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"select_annotation", @"Failed to select annotation", [self errorFromException:exception]);
@@ -349,8 +543,16 @@ RCT_REMAP_METHOD(setPropertiesForAnnotation,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setPropertiesForAnnotationForDocumentView:documentView annotationId:annotationId pageNumber:pageNumber propertyMap:propertyMap];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setPropertiesForAnnotationForDocumentViewTag:tag annotationId:annotationId pageNumber:pageNumber propertyMap:propertyMap];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_property_for_annotation", @"Failed to set property for annotation", [self errorFromException:exception]);
@@ -365,8 +567,16 @@ RCT_REMAP_METHOD(getPropertiesForAnnotation,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSDictionary *propertyMap = [[self documentViewManager] getPropertiesForAnnotationForDocumentView:documentView annotationId:annotationId pageNumber:pageNumber];
+            resolve(propertyMap);
+        }];
+#else
         NSDictionary *propertyMap = [[self documentViewManager] getPropertiesForAnnotationForDocumentViewTag:tag annotationId:annotationId pageNumber:pageNumber];
         resolve(propertyMap);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_properties_for_annotation", @"Failed to get properties for annotation", [self errorFromException:exception]);
@@ -380,8 +590,16 @@ RCT_REMAP_METHOD(setDrawAnnotations,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setDrawAnnotationsForDocumentView:documentView drawAnnotations:drawAnnotations];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setDrawAnnotationsForDocumentViewTag:tag drawAnnotations:drawAnnotations];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_draw_annotations", @"Failed to set draw annotations", [self errorFromException:exception]);
@@ -397,8 +615,16 @@ RCT_REMAP_METHOD(setVisibilityForAnnotation,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setVisibilityForAnnotationForDocumentView:documentView annotationId:annotationId pageNumber:pageNumber visibility:visibility];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setVisibilityForAnnotationForDocumentViewTag:tag annotationId:annotationId pageNumber:pageNumber visibility:visibility];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_visibility_for_annotation", @"Failed to set visibility for annotation", [self errorFromException:exception]);
@@ -412,8 +638,16 @@ RCT_REMAP_METHOD(setHighlightFields,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setHighlightFieldsForDocumentView:documentView highlightFields:highlightFields];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setHighlightFieldsForDocumentViewTag:tag highlightFields:highlightFields];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_highlight_fields", @"Failed to set highlight fields", [self errorFromException:exception]);
@@ -430,8 +664,16 @@ RCT_REMAP_METHOD(getAnnotationAt,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSDictionary *annotation = [[self documentViewManager] getAnnotationAtForDocumentView:documentView x:x y:y distanceThreshold:distanceThreshold minimumLineWeight:minimumLineWeight];
+            resolve(annotation);
+        }];
+#else
         NSDictionary *annotation = [[self documentViewManager] getAnnotationAtForDocumentViewTag:tag x:x y:y distanceThreshold:distanceThreshold minimumLineWeight:minimumLineWeight];
         resolve(annotation);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_annotation_at", @"Failed to get annotation at", [self errorFromException:exception]);
@@ -448,8 +690,16 @@ RCT_REMAP_METHOD(getAnnotationListAt,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSArray *annotations = [[self documentViewManager] getAnnotationListAtForDocumentView:documentView x1:x1 y1:y1 x2:x2 y2:y2];
+            resolve(annotations);
+        }];
+#else
         NSArray *annotations = [[self documentViewManager] getAnnotationListAtForDocumentViewTag:tag x1:x1 y1:y1 x2:x2 y2:y2];
         resolve(annotations);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_annotation_list_at", @"Failed to get annotation list at", [self errorFromException:exception]);
@@ -463,8 +713,16 @@ RCT_REMAP_METHOD(getAnnotationListOnPage,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSArray *annotations = [[self documentViewManager] getAnnotationListOnPageForDocumentView:documentView pageNumber:pageNumber];
+            resolve(annotations);
+        }];
+#else
         NSArray *annotations = [[self documentViewManager] getAnnotationListOnPageForDocumentViewTag:tag pageNumber:pageNumber];
         resolve(annotations);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_annotation_list_on_page", @"Failed to get annotation list on page", [self errorFromException:exception]);
@@ -472,17 +730,26 @@ RCT_REMAP_METHOD(getAnnotationListOnPage,
 }
 
 RCT_REMAP_METHOD(getCustomDataForAnnotation,
-                  getCustomDataForAnnotationForDocumentViewTag: (nonnull NSNumber *)tag
-                  annotationId:(NSString *)annotationId
-                  pageNumber:(NSInteger)pageNumber
-                  key:(NSString *)key
-                  resolver:(RCTPromiseResolveBlock)resolve
-                  rejector:(RCTPromiseRejectBlock)reject)
+                 getCustomDataForAnnotationForDocumentViewTag: (nonnull NSNumber *)tag
+                 annotationId:(NSString *)annotationId
+                 pageNumber:(NSInteger)pageNumber
+                 key:(NSString *)key
+                 resolver:(RCTPromiseResolveBlock)resolve
+                 rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSString *customData = [[self documentViewManager]
+                                    getCustomDataForAnnotationForDocumentView:documentView annotationId:annotationId pageNumber:pageNumber key:key];
+            resolve(customData);
+        }];
+#else
         NSString *customData = [[self documentViewManager]
-            getCustomDataForAnnotationForDocumentViewTag:tag annotationId:annotationId pageNumber:pageNumber key:key];
+                                getCustomDataForAnnotationForDocumentViewTag:tag annotationId:annotationId pageNumber:pageNumber key:key];
         resolve(customData);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_custom_data_for_annotation", @"Failed to get custom data for annotation", [self errorFromException:exception]);
@@ -497,8 +764,16 @@ RCT_REMAP_METHOD(setAnnotationToolbarItemEnabled,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setAnnotationToolbarItemEnabledForDocumentView:documentView itemId:itemId enable:enable];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setAnnotationToolbarItemEnabled:tag itemId:itemId enable:enable];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_annotation_toolbar_item_enabled", @"Failed to set item enabled/disabled", [self errorFromException:exception]);
@@ -512,8 +787,16 @@ RCT_REMAP_METHOD(getPageCropBox,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSDictionary<NSString *, NSNumber *> *cropBox = [[self documentViewManager] getPageCropBoxForDocumentView:documentView pageNumber:pageNumber];
+            resolve(cropBox);
+        }];
+#else
         NSDictionary<NSString *, NSNumber *> *cropBox = [[self documentViewManager] getPageCropBoxForDocumentViewTag:tag pageNumber:pageNumber];
         resolve(cropBox);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_page_crop_box", @"Failed to get page cropbox", [self errorFromException:exception]);
@@ -527,8 +810,16 @@ RCT_REMAP_METHOD(setCurrentPage,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            bool setResult = [[self documentViewManager] setCurrentPageForDocumentView:documentView pageNumber:pageNumber];
+            resolve([NSNumber numberWithBool:setResult]);
+        }];
+#else
         bool setResult = [[self documentViewManager] setCurrentPageForDocumentViewTag:tag pageNumber:pageNumber];
         resolve([NSNumber numberWithBool:setResult]);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_current_page", @"Failed to set current page", [self errorFromException:exception]);
@@ -541,8 +832,16 @@ RCT_REMAP_METHOD(getVisiblePages,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSArray *pages = [[self documentViewManager] getVisiblePagesForDocumentView:documentView];
+            resolve(pages);
+        }];
+#else
         NSArray *pages = [[self documentViewManager] getVisiblePagesForDocumentViewTag:tag];
         resolve(pages);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_visible_pages", @"Failed to get visible pages", [self errorFromException:exception]);
@@ -555,8 +854,16 @@ RCT_REMAP_METHOD(gotoPreviousPage,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            bool setResult = [[self documentViewManager] gotoPreviousPageForDocumentView:documentView];
+            resolve([NSNumber numberWithBool:setResult]);
+        }];
+#else
         bool setResult = [[self documentViewManager] gotoPreviousPageForDocumentViewTag:tag];
         resolve([NSNumber numberWithBool:setResult]);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"goto_previous_page", @"Failed to go to previous page", [self errorFromException:exception]);
@@ -569,8 +876,16 @@ RCT_REMAP_METHOD(gotoNextPage,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            bool setResult = [[self documentViewManager] gotoNextPageForDocumentView:documentView];
+            resolve([NSNumber numberWithBool:setResult]);
+        }];
+#else
         bool setResult = [[self documentViewManager] gotoNextPageForDocumentViewTag:tag];
         resolve([NSNumber numberWithBool:setResult]);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"goto_next_page", @"Failed to go to next page", [self errorFromException:exception]);
@@ -583,8 +898,16 @@ RCT_REMAP_METHOD(gotoFirstPage,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            bool setResult = [[self documentViewManager] gotoFirstPageForDocumentView:documentView];
+            resolve([NSNumber numberWithBool:setResult]);
+        }];
+#else
         bool setResult = [[self documentViewManager] gotoFirstPageForDocumentViewTag:tag];
         resolve([NSNumber numberWithBool:setResult]);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"goto_first_page", @"Failed to go to first page", [self errorFromException:exception]);
@@ -597,8 +920,16 @@ RCT_REMAP_METHOD(gotoLastPage,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            bool setResult = [[self documentViewManager] gotoLastPageForDocumentView:documentView];
+            resolve([NSNumber numberWithBool:setResult]);
+        }];
+#else
         bool setResult = [[self documentViewManager] gotoLastPageForDocumentViewTag:tag];
         resolve([NSNumber numberWithBool:setResult]);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"goto_last_page", @"Failed to go to last page", [self errorFromException:exception]);
@@ -606,13 +937,21 @@ RCT_REMAP_METHOD(gotoLastPage,
 }
 
 RCT_REMAP_METHOD(showGoToPageView,
-                showGoToPageViewForDocumentViewTag: (nonnull NSNumber *) tag
-                resolver:(RCTPromiseResolveBlock)resolve
-                rejector:(RCTPromiseRejectBlock)reject)
+                 showGoToPageViewForDocumentViewTag: (nonnull NSNumber *) tag
+                 resolver:(RCTPromiseResolveBlock)resolve
+                 rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] showGoToPageViewForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] showGoToPageViewForDocumentViewTag:tag];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"show_go_to_page_view", @"Failed to open goto page view", [self errorFromException:exception]);
@@ -625,8 +964,16 @@ RCT_REMAP_METHOD(closeAllTabs,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] closeAllTabsForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] closeAllTabsForDocumentViewTag:tag];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"close_all_tabs", @"Failed to close all tabs", [self errorFromException:exception]);
@@ -639,8 +986,16 @@ RCT_REMAP_METHOD(openTabSwitcher,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] openTabSwitcherForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] openTabSwitcherForDocumentViewTag:tag];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"open_tab_switcher", @"Failed to open tab switcher", [self errorFromException:exception]);
@@ -653,8 +1008,16 @@ RCT_REMAP_METHOD(getPageRotation,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            int pageNumber = [[self documentViewManager] getPageRotationForDocumentView:documentView];
+            resolve([NSNumber numberWithInt:pageNumber]);
+        }];
+#else
         int pageNumber = [[self documentViewManager] getPageRotationForDocumentViewTag:tag];
         resolve([NSNumber numberWithInt:pageNumber]);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_page_rotation", @"Failed to get page rotation", [self errorFromException:exception]);
@@ -667,7 +1030,14 @@ RCT_REMAP_METHOD(rotateClockwise,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] rotateClockwiseForDocumentView:documentView];
+        }];
+#else
         [[self documentViewManager] rotateClockwiseForDocumentViewTag:tag];
+#endif
     }
     @catch (NSException *exception) {
         reject(@"rotate_clockwise", @"Failed to rotate clockwise", [self errorFromException:exception]);
@@ -680,7 +1050,14 @@ RCT_REMAP_METHOD(rotateCounterClockwise,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] rotateCounterClockwiseForDocumentView:documentView];
+        }];
+#else
         [[self documentViewManager] rotateCounterClockwiseForDocumentViewTag:tag];
+#endif
     }
     @catch (NSException *exception) {
         reject(@"rotate_counter_clockwise", @"Failed to rotate counter-clockwise", [self errorFromException:exception]);
@@ -693,7 +1070,14 @@ RCT_REMAP_METHOD(undo,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] undoForDocumentView:documentView];
+        }];
+#else
         [[self documentViewManager] undoForDocumentViewTag:tag];
+#endif
     }
     @catch (NSException *exception) {
         reject(@"undo", @"Failed to undo", [self errorFromException:exception]);
@@ -706,7 +1090,14 @@ RCT_REMAP_METHOD(redo,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] redoForDocumentView:documentView];
+        }];
+#else
         [[self documentViewManager] redoForDocumentViewTag:tag];
+#endif
     }
     @catch (NSException *exception) {
         reject(@"redo", @"Failed to redo", [self errorFromException:exception]);
@@ -719,8 +1110,16 @@ RCT_REMAP_METHOD(canUndo,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            BOOL canUndo = [[self documentViewManager] canUndoForDocumentView:documentView];
+            resolve(@(canUndo));
+        }];
+#else
         BOOL canUndo = [[self documentViewManager] canUndoForDocumentViewTag:tag];
         resolve(@(canUndo));
+#endif
     }
     @catch (NSException *exception) {
         reject(@"canUndo", @"Failed to get canUndo", [self errorFromException:exception]);
@@ -733,8 +1132,16 @@ RCT_REMAP_METHOD(canRedo,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            BOOL canRedo = [[self documentViewManager] canRedoForDocumentView:documentView];
+            resolve(@(canRedo));
+        }];
+#else
         BOOL canRedo = [[self documentViewManager] canRedoForDocumentViewTag:tag];
         resolve(@(canRedo));
+#endif
     }
     @catch (NSException *exception) {
         reject(@"canRedo", @"Failed to canRedo", [self errorFromException:exception]);
@@ -747,14 +1154,22 @@ RCT_REMAP_METHOD(getZoom,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            double zoom = [[self documentViewManager] getZoomForDocumentView:documentView];
+            resolve([NSNumber numberWithDouble:zoom]);
+        }];
+#else
         double zoom = [[self documentViewManager] getZoomForDocumentViewTag:tag];
         resolve([NSNumber numberWithDouble:zoom]);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_zoom", @"Failed to get zoom", [self errorFromException:exception]);
     }
 }
-                 
+
 RCT_REMAP_METHOD(setZoomLimits,
                  setZoomLimitsForDocumentViewTag:(nonnull NSNumber *)tag
                  zoomLimitMode:(NSString *)zoomLimitMode
@@ -764,8 +1179,16 @@ RCT_REMAP_METHOD(setZoomLimits,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setZoomLimitsForDocumentView:documentView zoomLimitMode:zoomLimitMode minimum:minimum maximum:maximum];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setZoomLimitsForDocumentViewTag:tag zoomLimitMode:zoomLimitMode minimum:minimum maximum:maximum];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_failed", @"Failed to set zoom limits", [self errorFromException:exception]);
@@ -781,8 +1204,16 @@ RCT_REMAP_METHOD(zoomWithCenter,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] zoomWithCenterForDocumentView:documentView zoom:zoom x:x y:y];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] zoomWithCenterForDocumentViewTag:tag zoom:zoom x:x y:y];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"zoom_failed", @"Failed to zoom with center", [self errorFromException:exception]);
@@ -797,8 +1228,16 @@ RCT_REMAP_METHOD(zoomToRect,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] zoomToRectForDocumentView:documentView pageNumber:pageNumber rect:rect];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] zoomToRectForDocumentViewTag:tag pageNumber:pageNumber rect:rect];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"zoom_failed", @"Failed to zoom to rect", [self errorFromException:exception]);
@@ -814,8 +1253,16 @@ RCT_REMAP_METHOD(smartZoom,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] smartZoomForDocumentView:documentView x:x y:y animated:animated];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] smartZoomForDocumentViewTag:tag x:x y:y animated:animated];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"zoom_failed", @"Failed to smart zoom", [self errorFromException:exception]);
@@ -828,8 +1275,16 @@ RCT_REMAP_METHOD(getScrollPos,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSDictionary<NSString *, NSNumber *> *scrollPos = [[self documentViewManager] getScrollPosForDocumentView:documentView];
+            resolve(scrollPos);
+        }];
+#else
         NSDictionary<NSString *, NSNumber *> *scrollPos = [[self documentViewManager] getScrollPosForDocumentViewTag:tag];
         resolve(scrollPos);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_scroll_pos", @"Failed to get scroll pos", [self errorFromException:exception]);
@@ -845,8 +1300,16 @@ RCT_REMAP_METHOD(setProgressiveRendering,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setProgressiveRenderingForDocumentView:documentView progressiveRendering:progressiveRendering initialDelay:initialDelay interval:interval];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setProgressiveRenderingForDocumentViewTag:tag progressiveRendering:progressiveRendering initialDelay:initialDelay interval:interval];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_progressive_rendering", @"Failed to set progressive rendering", [self errorFromException:exception]);
@@ -856,12 +1319,21 @@ RCT_REMAP_METHOD(setProgressiveRendering,
 RCT_REMAP_METHOD(setImageSmoothing,
                  setImageSmoothingforDocumentViewTag: (nonnull NSNumber *) tag
                  imageSmoothing:(BOOL)imageSmoothing
-                resolver:(RCTPromiseResolveBlock)resolve
+                 resolver:(RCTPromiseResolveBlock)resolve
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setImageSmoothingforDocumentView:documentView imageSmoothing:imageSmoothing];
+            resolve(nil);
+        }];
+        
+#else
         [[self documentViewManager] setImageSmoothingforDocumentViewTag:tag imageSmoothing:imageSmoothing];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_image_smoothing", @"Failed to set image smoothing", [self errorFromException:exception]);
@@ -874,8 +1346,16 @@ RCT_REMAP_METHOD(getCanvasSize,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSDictionary<NSString *, NSNumber *> *canvasSize = [[self documentViewManager] getCanvasSizeForDocumentView:documentView];
+            resolve(canvasSize);
+        }];
+#else
         NSDictionary<NSString *, NSNumber *> *canvasSize = [[self documentViewManager] getCanvasSizeForDocumentViewTag:tag];
         resolve(canvasSize);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_canvas_size", @"Failed to get canvas size", [self errorFromException:exception]);
@@ -888,8 +1368,16 @@ RCT_REMAP_METHOD(isReflowMode,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            BOOL inReflow = [[self documentViewManager] isReflowModeForDocumentView:documentView];
+            resolve(@(inReflow));
+        }];
+#else
         BOOL inReflow = [[self documentViewManager] isReflowModeForDocumentViewTag:tag];
         resolve(@(inReflow));
+#endif
     }
     @catch (NSException *exception) {
         reject(@"is_reflow_mode", @"Failed to get is reflow mode", [self errorFromException:exception]);
@@ -902,8 +1390,16 @@ RCT_REMAP_METHOD(toggleReflow,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] toggleReflowForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] toggleReflow:tag];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"toggle_reflow", @"Failed to toggle reflow", [self errorFromException:exception]);
@@ -917,8 +1413,16 @@ RCT_REMAP_METHOD(showViewSettings,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] showViewSettingsForDocumentView:documentView rect:rect];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] showViewSettingsForDocumentViewTag:tag rect:rect];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"show_view_settings", @"Failed to show view settings", [self errorFromException:exception]);
@@ -932,8 +1436,16 @@ RCT_REMAP_METHOD(showAddPagesView,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] showAddPagesViewForDocumentView:documentView rect:rect];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] showAddPagesViewForDocumentViewTag:tag rect:rect];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"show_add_pages", @"Failed to show add pages view", [self errorFromException:exception]);
@@ -948,8 +1460,16 @@ RCT_REMAP_METHOD(shareCopy,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] shareCopyForDocumentView:documentView rect:rect withFlattening:flattening];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] shareCopyForDocumentViewTag:tag rect:rect withFlattening:flattening];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"share_copy", @"Failed to share a copy", [self errorFromException:exception]);
@@ -964,8 +1484,16 @@ RCT_REMAP_METHOD(openThumbnailsView,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] openThumbnailsViewForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] openThumbnailsViewForDocumentViewTag:tag];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"open_thumbnails_view", @"Failed to open thumbnails view", [self errorFromException:exception]);
@@ -981,8 +1509,16 @@ RCT_REMAP_METHOD(convertScreenPointsToPagePoints,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSArray *convertedPoints = [[self documentViewManager] convertScreenPointsToPagePointsForDocumentView:documentView points:points];
+            resolve(convertedPoints);
+        }];
+#else
         NSArray *convertedPoints = [[self documentViewManager] convertScreenPointsToPagePointsForDocumentViewTag:tag points:points];
         resolve(convertedPoints);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"convert_screen_points_to_page_points", @"Failed to convert screen points to page points", [self errorFromException:exception]);
@@ -996,8 +1532,16 @@ RCT_REMAP_METHOD(convertPagePointsToScreenPoints,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSArray *convertedPoints = [[self documentViewManager] convertPagePointsToScreenPointsForDocumentView:documentView points:points];
+            resolve(convertedPoints);
+        }];
+#else
         NSArray *convertedPoints = [[self documentViewManager] convertPagePointsToScreenPointsForDocumentViewTag:tag points:points];
         resolve(convertedPoints);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"convert_page_points_to_screen_points", @"Failed to convert page points to screen points", [self errorFromException:exception]);
@@ -1012,8 +1556,16 @@ RCT_REMAP_METHOD(getPageNumberFromScreenPoint,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            int pageNumber = [[self documentViewManager] getPageNumberFromScreenPointForDocumentView:documentView x:x y:y];
+            resolve([NSNumber numberWithInt:pageNumber]);
+        }];
+#else
         int pageNumber = [[self documentViewManager] getPageNumberFromScreenPointForDocumentViewTag:tag x:x y:y];
         resolve([NSNumber numberWithInt:pageNumber]);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_page_number_from_screen_point", @"Failed to get page number from screen point", [self errorFromException:exception]);
@@ -1027,8 +1579,16 @@ RCT_REMAP_METHOD(setOverprint,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setOverprintforDocumentView:documentView overprint:overprint];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setOverprintforDocumentViewTag:tag overprint:overprint];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_overprint", @"Failed to set overprint", [self errorFromException:exception]);
@@ -1042,8 +1602,16 @@ RCT_REMAP_METHOD(setPageBorderVisibility,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setPageBorderVisibilityForDocumentView:documentView pageBorderVisibility:pageBorderVisibility];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setPageBorderVisibilityForDocumentViewTag:tag pageBorderVisibility:pageBorderVisibility];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_page_border_visibility", @"Failed to set page border visibility", [self errorFromException:exception]);
@@ -1057,8 +1625,16 @@ RCT_REMAP_METHOD(setPageTransparencyGrid,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setPageTransparencyGridForDocumentView:documentView pageTransparencyGrid:pageTransparencyGrid];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setPageTransparencyGridForDocumentViewTag:tag pageTransparencyGrid:pageTransparencyGrid];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_page_transparency_grid", @"Failed to set page transparency grid", [self errorFromException:exception]);
@@ -1072,8 +1648,16 @@ RCT_REMAP_METHOD(setDefaultPageColor,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setDefaultPageColorForDocumentView:documentView defaultPageColor:defaultPageColor];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setDefaultPageColorForDocumentViewTag:tag defaultPageColor:defaultPageColor];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_default_page_color", @"Failed to set default page color", [self errorFromException:exception]);
@@ -1087,8 +1671,16 @@ RCT_REMAP_METHOD(setBackgroundColor,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setBackgroundColorForDocumentView:documentView backgroundColor:backgroundColor];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setBackgroundColorForDocumentViewTag:tag backgroundColor:backgroundColor];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_background_color", @"Failed to set background color", [self errorFromException:exception]);
@@ -1102,8 +1694,16 @@ RCT_REMAP_METHOD(setColorPostProcessMode,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setColorPostProcessModeForDocumentView:documentView colorPostProcessMode:colorPostProcessMode];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setColorPostProcessModeForDocumentViewTag:tag colorPostProcessMode:colorPostProcessMode];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_color_post_process_mode", @"Failed to set color post-process mode", [self errorFromException:exception]);
@@ -1118,8 +1718,16 @@ RCT_REMAP_METHOD(setColorPostProcessColors,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setColorPostProcessColorsForDocumentView:documentView whiteColor:whiteColor blackColor:blackColor];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setColorPostProcessColorsForDocumentViewTag:tag whiteColor:whiteColor blackColor:blackColor];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_color_post_process_colors", @"Failed to set color post-process colors", [self errorFromException:exception]);
@@ -1137,8 +1745,16 @@ RCT_REMAP_METHOD(findText,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] findTextForDocumentView:documentView searchString:searchString matchCase:matchCase matchWholeWord:matchWholeWord searchUp:searchUp regExp:regExp];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] findTextForDocumentViewTag:tag searchString:searchString matchCase:matchCase matchWholeWord:matchWholeWord searchUp:searchUp regExp:regExp];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"find_text", @"Failed to initiaze a text search", [self errorFromException:exception]);
@@ -1151,7 +1767,14 @@ RCT_REMAP_METHOD(cancelFindText,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] cancelFindTextForDocumentView:documentView];
+        }];
+#else
         [[self documentViewManager] cancelFindTextForDocumentViewTag:tag];
+#endif
     }
     @catch (NSException *exception) {
         reject(@"cancel_text", @"Failed to cancel text search", [self errorFromException:exception]);
@@ -1164,8 +1787,16 @@ RCT_REMAP_METHOD(openSearch,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] openSearchForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] openSearchForDocumentViewTag:tag];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"open_search", @"Failed to open search", [self errorFromException:exception]);
@@ -1181,8 +1812,16 @@ RCT_REMAP_METHOD(startSearchMode,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] startSearchModeForDocumentView:documentView searchString:searchString matchCase:matchCase matchWholeWord:matchWholeWord];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] startSearchModeForDocumentViewTag:tag searchString:searchString matchCase:matchCase matchWholeWord:matchWholeWord];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"start_search_mode", @"Failed to start search mode", [self errorFromException:exception]);
@@ -1195,7 +1834,14 @@ RCT_REMAP_METHOD(exitSearchMode,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] exitSearchModeForDocumentView:documentView];
+        }];
+#else
         [[self documentViewManager] exitSearchModeForDocumentViewTag:tag];
+#endif
     }
     @catch (NSException *exception) {
         reject(@"exit_search_mode", @"Failed to exit text search mode", [self errorFromException:exception]);
@@ -1209,8 +1855,16 @@ RCT_REMAP_METHOD(getSelection,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSDictionary *selection = [[self documentViewManager] getSelectionForDocumentView:documentView pageNumber:pageNumber];
+            resolve(selection);
+        }];
+#else
         NSDictionary *selection = [[self documentViewManager] getSelectionForDocumentViewTag:tag pageNumber:pageNumber];
         resolve(selection);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_selection", @"Failed to get text selection", [self errorFromException:exception]);
@@ -1223,8 +1877,16 @@ RCT_REMAP_METHOD(hasSelection,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            bool hasSelection = [[self documentViewManager] hasSelectionForDocumentView:documentView];
+            resolve([NSNumber numberWithBool:hasSelection]);
+        }];
+#else
         bool hasSelection = [[self documentViewManager] hasSelectionForDocumentViewTag:tag];
         resolve([NSNumber numberWithBool:hasSelection]);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"has_selection", @"Failed to get whether document has text selection", [self errorFromException:exception]);
@@ -1237,8 +1899,16 @@ RCT_REMAP_METHOD(clearSelection,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] clearSelectionForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] clearSelectionForDocumentViewTag:tag];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"clear_selection", @"Failed to clear text selection", [self errorFromException:exception]);
@@ -1251,8 +1921,16 @@ RCT_REMAP_METHOD(getSelectionPageRange,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSDictionary *pageRange = [[self documentViewManager] getSelectionPageRangeForDocumentView:documentView];
+            resolve(pageRange);
+        }];
+#else
         NSDictionary *pageRange = [[self documentViewManager] getSelectionPageRangeForDocumentViewTag:tag];
         resolve(pageRange);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_selection_page_range", @"Failed to get text selection page range", [self errorFromException:exception]);
@@ -1266,8 +1944,16 @@ RCT_REMAP_METHOD(hasSelectionOnPage,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            bool hasSelection = [[self documentViewManager] hasSelectionOnPageForDocumentView:documentView pageNumber:pageNumber];
+            resolve([NSNumber numberWithBool:hasSelection]);
+        }];
+#else
         bool hasSelection = [[self documentViewManager] hasSelectionOnPageForDocumentViewTag:tag pageNumber:pageNumber];
         resolve([NSNumber numberWithBool:hasSelection]);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"has_selection_on_page", @"Failed to get whether document has text selection on page", [self errorFromException:exception]);
@@ -1281,8 +1967,16 @@ RCT_REMAP_METHOD(selectInRect,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            BOOL selected = [[self documentViewManager] selectInRectForDocumentView:documentView rect:rect];
+            resolve([NSNumber numberWithBool:selected]);
+        }];
+#else
         BOOL selected = [[self documentViewManager] selectInRectForDocumentViewTag:tag rect:rect];
         resolve([NSNumber numberWithBool:selected]);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"select_in_rect", @"Failed to select in rect", [self errorFromException:exception]);
@@ -1296,8 +1990,16 @@ RCT_REMAP_METHOD(isThereTextInRect,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            BOOL hasText = [[self documentViewManager] isThereTextInRectForDocumentView:documentView rect:rect];
+            resolve([NSNumber numberWithBool:hasText]);
+        }];
+#else
         BOOL hasText = [[self documentViewManager] isThereTextInRectForDocumentViewTag:tag rect:rect];
         resolve([NSNumber numberWithBool:hasText]);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"is_there_text_in_rect", @"Failed to get whether there is text in rect", [self errorFromException:exception]);
@@ -1310,8 +2012,16 @@ RCT_REMAP_METHOD(selectAll,
                  rejector:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] selectAllForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] selectAllForDocumentViewTag:tag];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"select_all", @"Failed to select all", [self errorFromException:exception]);
@@ -1324,8 +2034,16 @@ RCT_REMAP_METHOD(openOutlineList,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] openOutlineListForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] openOutlineListForDocumentViewTag:tag];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"open_outline_list_failed", @"Failed to open outline list", [self errorFromException:exception]);
@@ -1338,8 +2056,16 @@ RCT_REMAP_METHOD(openLayersList,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] openLayersListForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] openLayersListForDocumentViewTag:tag];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"open_layers_list_failed", @"Failed to open layers list", [self errorFromException:exception]);
@@ -1352,8 +2078,16 @@ RCT_REMAP_METHOD(openNavigationLists,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] openNavigationListsForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] openNavigationListsForDocumentViewTag:tag];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"open_navigation_lists_failed", @"Failed to open navigation lists", [self errorFromException:exception]);
@@ -1366,8 +2100,16 @@ RCT_REMAP_METHOD(getSavedSignatures,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSArray *signatures = [[self documentViewManager] getSavedSignaturesForDocumentView:documentView];
+            resolve(signatures);
+        }];
+#else
         NSArray *signatures = [[self documentViewManager] getSavedSignaturesForDocumentViewTag:tag];
         resolve(signatures);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_saved_signatures_failed", @"Failed to get saved signatures", [self errorFromException:exception]);
@@ -1380,8 +2122,16 @@ RCT_REMAP_METHOD(getSavedSignatureFolder,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            NSString *folder = [[self documentViewManager] getSavedSignatureFolderForDocumentView:documentView];
+            resolve(folder);
+        }];
+#else
         NSString *folder = [[self documentViewManager] getSavedSignatureFolderForDocumentViewTag:tag];
         resolve(folder);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"get_saved_signature_folder_failed", @"Failed to get saved signatures folder", [self errorFromException:exception]);
@@ -1400,8 +2150,16 @@ RCT_REMAP_METHOD(importAnnotationCommand,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] importAnnotationCommandForDocumentView:documentView xfdfCommand:xfdfCommand initialLoad:initialLoad];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] importAnnotationCommandForDocumentViewTag:tag xfdfCommand:xfdfCommand initialLoad:initialLoad];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"import_failed", @"Failed to import annotation command", [self errorFromException:exception]);
@@ -1418,8 +2176,16 @@ RCT_REMAP_METHOD(setStampImageData,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setStampImageDataForDocumentView:documentView annotationId:annotationId pageNumber:pageNumber stampImageDataUrl:stampImageDataUrl];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setStampImageDataForDocumentViewTag:tag annotationId:annotationId pageNumber:pageNumber stampImageDataUrl:stampImageDataUrl];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_stamp_image_data", @"Failed to set stamp image data", [self errorFromException:exception]);
@@ -1433,11 +2199,61 @@ RCT_REMAP_METHOD(setFormFieldHighlightColor,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setFormFieldHighlightColorForDocumentView:documentView fieldHighlightColor:fieldHighlightColor];
+            resolve(nil);
+        }];
+#else
         [[self documentViewManager] setFormFieldHighlightColorForDocumentViewTag:tag fieldHighlightColor:fieldHighlightColor];
         resolve(nil);
+#endif
     }
     @catch (NSException *exception) {
         reject(@"set_form_field_highlight_color", @"Failed to set form field highlight color", [self errorFromException:exception]);
+    }
+}
+
+RCT_REMAP_METHOD(setAnnotationDisplayAuthorMap,
+                 setAnnotationDisplayAuthorMapForDocumentViewTag:(nonnull NSNumber *)tag
+                 map:(NSDictionary *)map
+                 resolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+    @try {
+        [[self documentViewManager] setAnnotationDisplayAuthorMapForDocumentViewTag:tag authorMap:map completion:^(BOOL success, NSError * _Nullable error) {
+            if (!success) {
+                reject(@"set_annotation_display_author_map", @"Failed to set annotation display author map", error);
+            } else {
+                resolve(nil);
+            }
+        }];
+    }
+    @catch (NSException *exception) {
+        reject(@"set_annotation_display_author_map", @"Failed to set annotation display author map", [self errorFromException:exception]);
+    }
+}
+
+RCT_REMAP_METHOD(openAnnotationList,
+                 openAnnotationListForDocumentViewTag:(nonnull NSNumber *)tag
+                 resolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+    @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] openAnnotationListForDocumentView:documentView];
+            resolve(nil);
+        }];
+#else
+        [[self documentViewManager] openAnnotationListForDocumentViewTag:tag];
+        resolve(nil);
+#endif
+    }
+    @catch (NSException *exception) {
+        reject(@"open_annotation_list", @"Failed to open annotation list", [self errorFromException:exception]);
     }
 }
 @end

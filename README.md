@@ -82,66 +82,66 @@ The release can be found here: https://github.com/ApryseSDK/pdftron-react-native
 
 1. Add the following in your `android/app/build.gradle` file:
 
-	```diff
-	defaultConfig {
-	    applicationId "com.example.myapp"
-	    minSdkVersion rootProject.ext.minSdkVersion
-	    targetSdkVersion rootProject.ext.targetSdkVersion
-	    versionCode 1
-	    versionName "1.0.0"
+   ```diff
+   defaultConfig {
+       applicationId "com.example.myapp"
+       minSdkVersion rootProject.ext.minSdkVersion
+       targetSdkVersion rootProject.ext.targetSdkVersion
+       versionCode 1
+       versionName "1.0.0"
 
-	+   resValue("string", "PDFTRON_LICENSE_KEY", "\"LICENSE_KEY_GOES_HERE\"")
-	}
-	```
-   
+   +   resValue("string", "PDFTRON_LICENSE_KEY", "\"LICENSE_KEY_GOES_HERE\"")
+   }
+   ```
+
 2. Add the following to your `android/app/src/main/AndroidManifest.xml` file:
 
-	```diff
-	<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.example.myapp">
- 
-	  <!-- Required if you want to work with online documents -->
-	+ <uses-permission android:name="android.permission.INTERNET" />
-	  <!-- Required if you want to record audio annotations -->
-	+ <uses-permission android:name="android.permission.RECORD_AUDIO" />
- 
-	  <application
-	    ...
-	+   android:largeHeap="true">
-	
-	    <!-- Add license key in meta-data tag here. This should be inside the application tag. -->
-	+   <meta-data
-	+     android:name="pdftron_license_key"
-	+     android:value="@string/PDFTRON_LICENSE_KEY" />
-	    ...
-      <activity
-	      ...
-	-     android:windowSoftInputMode="adjustResize"
-	+     android:windowSoftInputMode="adjustPan">
-      </activity>
-	```
+   ```diff
+   <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+     package="com.example.myapp">
+
+     <!-- Required if you want to work with online documents -->
+   + <uses-permission android:name="android.permission.INTERNET" />
+     <!-- Required if you want to record audio annotations -->
+   + <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+     <application
+       ...
+   +   android:largeHeap="true">
+
+       <!-- Add license key in meta-data tag here. This should be inside the application tag. -->
+   +   <meta-data
+   +     android:name="pdftron_license_key"
+   +     android:value="@string/PDFTRON_LICENSE_KEY" />
+       ...
+     <activity
+         ...
+   -     android:windowSoftInputMode="adjustResize"
+   +     android:windowSoftInputMode="adjustPan">
+     </activity>
+   ```
 
 3. Replace `App.js` (or `App.tsx`) with what is shown for [NPM](#Usage-NPM) or [GitHub](#Usage-Github)
 4. Finally in the root project directory, run `react-native run-android`.
 
 ### iOS
 
-> [!IMPORTANT]
-> As of March 2025, use of the podspec distributed specifically for the PDFTron React Native wrapper (`https://pdftron.com/downloads/ios/react-native/latest.podspec`) is deprecated.
-> 
-> **All new and existing users are recommended to use the standard [Apryse iOS SDK CocoaPods](https://docs.apryse.com/ios/guides/get-started/integration?tab=cocoapods) instead.**
->
-> Please update your `Podfile` accordingly.
+#### Note — January 2022
+
+**There is a new podspec file to use when integrating the PDFTron React Native Wrapper for iOS:**
+**https://pdftron.com/downloads/ios/react-native/latest.podspec**
+
+**Please update your `Podfile` accordingly.**
 
 1. Open `Podfile` in the `ios` folder, add the following line to the `target 'MyApp' do ... end` block:
 
-    ```
-    target 'MyApp' do
-        # ...
-        pod 'PDFNet', podspec: 'https://www.pdftron.com/downloads/ios/cocoapods/xcframeworks/pdfnet/latest.podspec'
-        # ...
-    end
-    ```
+   ```
+   target 'MyApp' do
+       # ...
+       pod 'PDFNet', podspec: 'https://pdftron.com/downloads/ios/react-native/latest.podspec'
+       # ...
+   end
+   ```
 
 2. In the `ios` folder, run `pod install`.
 3. Replace `App.js` (or `App.tsx`) with what is shown for [NPM](#Usage-NPM) or [GitHub](#Usage-Github)
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   ```javascript
   document = "content://...";
   ```
-  
+
 ## Usage-NPM
 
 If you installed through NPM package, Replace `App.js` (or `App.tsx` if you are [using TypeScript](#typescript)) with the code below.
@@ -457,6 +457,7 @@ const styles = StyleSheet.create({
   ```javascript
   document = "content://...";
   ```
+
 ## TypeScript
 
 PDFTron React Native introduced support for TypeScript in version 3.0.0. This update mainly benefits those who already use TypeScript in their applications. It also provides certain benefits to all customers, including those who use JavaScript without TypeScript.
