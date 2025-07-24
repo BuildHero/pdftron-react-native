@@ -42,5 +42,8 @@
     "@types/react-native": "*",
     "@types/prop-types": "*",
     "typescript": "*"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }
