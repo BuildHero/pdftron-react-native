@@ -572,4 +572,10 @@
 - (void)setFormFieldHighlightColorForDocumentViewTag:(NSNumber *)tag fieldHighlightColor:(NSDictionary *)fieldHighlightColor;
 #endif
 
+#if RCT_NEW_ARCH_ENABLED
+- (void)setAnnotationDisplayAuthorMapForDocumentView:(RNTPTDocumentView *)documentView authorMap:(NSDictionary *)authorMap completion:(void(^)(BOOL success, NSError * _Nullable error)) completion;
+#else
+- (void)setAnnotationDisplayAuthorMapForDocumentViewTag: (NSNumber *)tag authorMap:(NSDictionary *)authorMap completion:(void(^)(BOOL success, NSError * _Nullable error)) completion;
+#endif
+
 @end

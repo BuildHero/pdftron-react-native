@@ -2222,6 +2222,18 @@ RCT_REMAP_METHOD(setAnnotationDisplayAuthorMap,
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     @try {
+#if RCT_NEW_ARCH_ENABLED
+        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
+            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
+            [[self documentViewManager] setAnnotationDisplayAuthorMapForDocumentView:documentView authorMap:map completion:^(BOOL success, NSError * _Nullable error) {
+                if (!success) {
+                    reject(@"set_annotation_display_author_map", @"Failed to set annotation display author map", error);
+                } else {
+                    resolve(nil);
+                }
+            }];
+        }];
+#else
         [[self documentViewManager] setAnnotationDisplayAuthorMapForDocumentViewTag:tag authorMap:map completion:^(BOOL success, NSError * _Nullable error) {
             if (!success) {
                 reject(@"set_annotation_display_author_map", @"Failed to set annotation display author map", error);
@@ -2229,31 +2241,10 @@ RCT_REMAP_METHOD(setAnnotationDisplayAuthorMap,
                 resolve(nil);
             }
         }];
-    }
-    @catch (NSException *exception) {
-        reject(@"set_annotation_display_author_map", @"Failed to set annotation display author map", [self errorFromException:exception]);
-    }
-}
-
-RCT_REMAP_METHOD(openAnnotationList,
-                 openAnnotationListForDocumentViewTag:(nonnull NSNumber *)tag
-                 resolver:(RCTPromiseResolveBlock)resolve
-                 rejecter:(RCTPromiseRejectBlock)reject)
-{
-    @try {
-#if RCT_NEW_ARCH_ENABLED
-        [_viewRegistry_DEPRECATED addUIBlock:^(RCTViewRegistry *viewRegistry) {
-            RNTPTDocumentView *documentView = [self getDocumentView:tag viewRegistry:viewRegistry];
-            [[self documentViewManager] openAnnotationListForDocumentView:documentView];
-            resolve(nil);
-        }];
-#else
-        [[self documentViewManager] openAnnotationListForDocumentViewTag:tag];
-        resolve(nil);
 #endif
     }
     @catch (NSException *exception) {
-        reject(@"open_annotation_list", @"Failed to open annotation list", [self errorFromException:exception]);
+        reject(@"set_annotation_display_author_map", @"Failed to set annotation display author map", [self errorFromException:exception]);
     }
 }
 @end
