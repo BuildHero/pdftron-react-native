@@ -2335,27 +2335,6 @@ RCT_CUSTOM_VIEW_PROPERTY(signatureColors, NSArray, RNTPTDocumentView)
 #endif
 
 #if RCT_NEW_ARCH_ENABLED
-- (void)openAnnotationListForDocumentView:(RNTPTDocumentView *)documentView
-{
-    if (documentView) {
-        [documentView openAnnotationList];
-    } else {
-        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Unable to find DocumentView for tag" userInfo:nil];
-    }
-}
-#else
-- (void)openAnnotationListForDocumentViewTag:(NSNumber *)tag
-{
-    RNTPTDocumentView *documentView = self.documentViews[tag];
-    if (documentView) {
-        [documentView openAnnotationList];
-    } else {
-        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Unable to find DocumentView for tag" userInfo:nil];
-    }
-}
-#endif
-
-#if RCT_NEW_ARCH_ENABLED
 - (void)openThumbnailsViewForDocumentView:(RNTPTDocumentView *)documentView
 {
     if (documentView) {
@@ -3081,27 +3060,6 @@ RCT_CUSTOM_VIEW_PROPERTY(signatureColors, NSArray, RNTPTDocumentView)
     
     if (documentView) {
         [documentView setAnnotationDisplayAuthorMap:authorMap completion:completion];
-    } else {
-        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Unable to find DocumentView for tag" userInfo:nil];
-    }
-}
-#endif
-
-#if RCT_NEW_ARCH_ENABLED
-- (void)openAnnotationListForDocumentView:(RNTPTDocumentView *)documentView
-{
-    if (documentView) {
-        [documentView openAnnotationList];
-    } else {
-        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Unable to find DocumentView for tag" userInfo:nil];
-    }
-}
-#else
-- (void)openAnnotationListForDocumentViewTag:(NSNumber *)tag
-{
-    RNTPTDocumentView *documentView = self.documentViews[tag];
-    if (documentView) {
-        [documentView openAnnotationList];
     } else {
         @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Unable to find DocumentView for tag" userInfo:nil];
     }
