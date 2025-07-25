@@ -19,7 +19,7 @@ public class RNPdftronPackage implements ReactPackage {
     @Override
     public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
         if (null == mDocumentViewViewManager) {
-            mDocumentViewViewManager = new DocumentViewViewManager();
+            mDocumentViewViewManager = new DocumentViewViewManager(reactContext);
         }
         return Arrays.<NativeModule>asList(
                 new RNPdftronModule(reactContext),
@@ -30,7 +30,7 @@ public class RNPdftronPackage implements ReactPackage {
     @Override
     public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
         if (null == mDocumentViewViewManager) {
-            mDocumentViewViewManager = new DocumentViewViewManager();
+            mDocumentViewViewManager = new DocumentViewViewManager(reactContext);
         }
         return Arrays.<ViewManager>asList(
                 new PDFViewCtrlViewManager(),

@@ -2713,6 +2713,7 @@ public class DocumentView extends com.pdftron.pdf.controls.DocumentView2 {
     private PDFViewCtrl.OnCanvasSizeChangeListener mOnCanvasSizeChangeListener = new PDFViewCtrl.OnCanvasSizeChangeListener() {
         @Override
         public void onCanvasSizeChanged() {
+            if (getPdfViewCtrl() == null) return;
             WritableMap params = Arguments.createMap();
             params.putString(ON_ZOOM_CHANGED, ON_ZOOM_CHANGED);
             params.putDouble(ZOOM_KEY, getPdfViewCtrl().getZoom());

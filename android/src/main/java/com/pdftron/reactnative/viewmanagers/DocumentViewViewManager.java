@@ -4,14 +4,18 @@ import android.content.Intent;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.UIManager;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.ViewGroupManager;
 import com.facebook.react.uimanager.annotations.ReactProp;
@@ -22,10 +26,50 @@ import com.pdftron.pdf.utils.ShortcutHelper;
 import com.pdftron.reactnative.views.DocumentView;
 
 public class DocumentViewViewManager extends ViewGroupManager<DocumentView> {
+    private final ReactContext mReactContext;
+    private boolean mSetAnnotationToolbars = false;
+
+    public DocumentViewViewManager(final ReactContext reactContext) {
+        mReactContext = reactContext;
+    }
+
+    /**
+     * NOTE: This is a hack to allow to for temporary compability
+     * with react native's new architecture.
+     */
+    private class DocumentViewSparseArray<T> extends SparseArray<T> {
+        @Override
+        public T get(int key) {
+            final UIManager fabricUIManager = mReactContext.getFabricUIManager();
+
+            if (fabricUIManager == null) {
+                return super.get(key);
+            }
+
+            return (T) fabricUIManager.resolveView(key);
+        }
+
+        @Override
+        public T get(int key, T valueIfKeyNotFound) {
+            final UIManager fabricUIManager = mReactContext.getFabricUIManager();
+
+            if (fabricUIManager == null) {
+                return super.get(key, valueIfKeyNotFound);
+            }
+
+            final T view = (T) fabricUIManager.resolveView(key);
+
+            if (view == null) {
+                return valueIfKeyNotFound;
+            }
+
+            return view;
+        }
+    }
 
     private static final String REACT_CLASS = "RCTDocumentView";
 
-    private SparseArray<DocumentView> mDocumentViews = new SparseArray<>();
+    private SparseArray<DocumentView> mDocumentViews = new DocumentViewSparseArray<>();
 
     @Override
     public String getName() {
@@ -358,7 +402,12 @@ public class DocumentViewViewManager extends ViewGroupManager<DocumentView> {
 
     @ReactProp(name = "annotationToolbars")
     public void setAnnotationToolbars(DocumentView documentView, ReadableArray toolbars) {
-        documentView.setAnnotationToolbars(toolbars);
+        // When fabric enabled this ends up being called multiple times
+        // causing duplicate toolbar id errors to be thrown.
+        if (!mSetAnnotationToolbars) {
+            documentView.setAnnotationToolbars(toolbars);
+            mSetAnnotationToolbars = true;
+        }
     }
 
     @ReactProp(name = "initialToolbar")
@@ -458,7 +507,7 @@ public class DocumentViewViewManager extends ViewGroupManager<DocumentView> {
 
     @ReactProp(name = "showNavigationListAsSidePanelOnLargeDevices")
     public void setShowNavigationListAsSidePanelOnLargeDevices(DocumentView documentView,
-            boolean showNavigationListAsSidePanelOnLargeDevices) {
+                                                               boolean showNavigationListAsSidePanelOnLargeDevices) {
         documentView.setShowNavigationListAsSidePanelOnLargeDevices(showNavigationListAsSidePanelOnLargeDevices);
     }
 
@@ -1152,7 +1201,7 @@ public class DocumentViewViewManager extends ViewGroupManager<DocumentView> {
     }
 
     public void findText(int tag, String searchString, boolean matchCase, boolean matchWholeWord, boolean searchUp,
-            boolean regExp) throws PDFNetException {
+                         boolean regExp) throws PDFNetException {
         DocumentView documentView = mDocumentViews.get(tag);
         if (documentView != null) {
             documentView.findText(searchString, matchCase, matchWholeWord, searchUp, regExp);
