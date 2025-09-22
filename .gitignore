@@ -52,3 +52,4 @@ example/android/app/src/main/assets/index.android.bundle.meta
 # Build
 /lib
 .npmrc
+.cursor/mcp.json
