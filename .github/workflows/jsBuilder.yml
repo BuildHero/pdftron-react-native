@@ -22,7 +22,7 @@ jobs:
           npm i react-native@0.68.2
 
       - name: Node setup
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: '16'
           cache: 'npm'
@@ -59,7 +59,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }} # checks out the branch being merged into `master`
 
       - name: Node setup
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: 16
           registry-url: https://registry.npmjs.org/
