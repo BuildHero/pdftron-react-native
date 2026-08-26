@@ -1,7 +1,7 @@
 {
   "name": "react-native-pdftron",
   "title": "React Native Pdftron",
-  "version": "3.0.12",
+  "version": "3.0.11-NaN",
   "description": "React Native Pdftron",
   "main": "./lib/index.js",
   "typings": "index.ts",
@@ -29,19 +29,19 @@
   ],
   "readmeFilename": "README.md",
   "dependencies": {
-    "@types/prop-types": "*",
     "deprecated-react-native-prop-types": "*"
   },
   "peerDependencies": {
-    "prop-types": "*",
     "react": "*",
-    "react-native": "^0.68.2"
+    "react-native": "*",
+    "prop-types": "*"
   },
   "devDependencies": {
-    "@types/react": "*",
-    "@types/react-native": "^0.68.1",
     "react": "*",
-    "typescript": "^5.9.3"
+    "@types/react": "*",
+    "@types/react-native": "*",
+    "@types/prop-types": "*",
+    "typescript": "*"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
