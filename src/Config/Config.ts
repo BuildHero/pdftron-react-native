@@ -362,7 +362,7 @@ type ValueOf<T> = T[keyof T];
  *
  * These types are used for props such as `disabledElements` and methods such as `exportAsImage`
  */
-export module Config {
+export namespace Config {
   export type Buttons = ValueOf<typeof Config.Buttons>;
   export type Tools = ValueOf<typeof Config.Tools>;
   export type FitMode = ValueOf<typeof Config.FitMode>;

@@ -22,7 +22,7 @@ jobs:
           npm i react-native@0.68.2
 
       - name: Node setup
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: '16'
           cache: 'npm'
@@ -59,7 +59,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }} # checks out the branch being merged into `master`
 
       - name: Node setup
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: 16
           registry-url: https://registry.npmjs.org/
@@ -67,7 +67,18 @@ jobs:
       - name: Get Latest package.json
         run: |
           git pull origin ${{ github.head_ref }}
-          git checkout origin/master package.json
+          # Only take master's `version` field as the bump baseline - a full
+          # `git checkout origin/master package.json` here used to overwrite
+          # the WHOLE file, silently discarding any dependencies/devDependencies
+          # changes made on this PR branch (see MOBILE-5071).
+          node -e "
+            const fs = require('fs');
+            const { execSync } = require('child_process');
+            const masterPkg = JSON.parse(execSync('git show origin/master:package.json').toString());
+            const branchPkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+            branchPkg.version = masterPkg.version;
+            fs.writeFileSync('package.json', JSON.stringify(branchPkg, null, 2) + '\n');
+          "
 
       - name: Update package.json
         run: node scripts/update_version.js
